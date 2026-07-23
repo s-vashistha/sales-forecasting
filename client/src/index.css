@@ -1,0 +1,41 @@
+:root {
+  --ink-950: #0D1117;
+  --ink-900: #12172B;
+  --ink-800: #1B2138;
+  --ink-700: #262E4A;
+  --ink-600: #384267;
+  --paper: #F3F1EA;
+  --paper-dim: #C9C6BA;
+
+  --amber: #E2A73E;
+  --amber-dim: #8A6C2E;
+  --teal: #3FA88C;
+  --teal-dim: #235E4F;
+  --coral: #E0645A;
+  --coral-dim: #7A3830;
+
+  --font-ui: 'IBM Plex Sans', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'Courier New', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font-ui);
+  background: var(--ink-950);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+::selection { background: var(--amber); color: var(--ink-950); }
+
+button {
+  font-family: var(--font-ui);
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation: none !important; transition: none !important; }
+}

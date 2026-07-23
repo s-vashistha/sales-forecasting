@@ -1,0 +1,16 @@
+{
+  "best_model": "prophet",
+  "arima_metrics": {
+    "mape": 4.73,
+    "rmse": 22.59,
+    "accuracy": 95.27
+  },
+  "prophet_metrics": {
+    "mape": 4.06,
+    "rmse": 18.49,
+    "accuracy": 95.94
+  },
+  "trained_on_rows": 1065,
+  "test_days": 30,
+  "last_training_date": "2025-12-30"
+}
