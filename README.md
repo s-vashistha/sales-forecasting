@@ -161,7 +161,7 @@ Open `http://localhost:5173` — you should see the dashboard with:
 3. Connect your GitHub repo.
 4. Configure:
    - **Root Directory:** `server`
-   - **Build Command:** `pip install -r requirements.txt`
+   - **Build Command:** `pip install --upgrade pip && pip install -r requirements.txt`
    - **Start Command:** `gunicorn app:app --bind 0.0.0.0:$PORT`
    - **Environment:** Python 3
 5. Since Render only runs build/start commands from within `server/`, but still
