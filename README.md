@@ -17,7 +17,9 @@ sales-forecasting/
 │   └── requirements.txt
 ├── server/                 # Flask REST API
 │   ├── app.py
-│   └── requirements.txt
+│   ├── requirements.txt
+│   ├── runtime.txt            # Pins Python 3.11 for Render compatibility
+│   └── render_build.sh
 └── client/                 # React dashboard
     ├── src/
     │   ├── components/
@@ -39,7 +41,8 @@ sales-forecasting/
 3. **`ml/train_model.py`** trains both ARIMA and Prophet on a train/test split,
    evaluates accuracy (MAPE, RMSE) on a held-out 30-day test window, then retrains
    the better-performing model on the full dataset for production forecasting.
-4. **`server/app.py`** loads the saved model and exposes REST endpoints for
+4. **`server/app.py`** trains a lightweight ARIMA model at startup from recent data
+   (avoids pickle version-compatibility issues) and exposes REST endpoints for
    forecasts, historical data, and inventory reorder recommendations.
 5. **`client/`** is a React + Vite dashboard that charts actual vs. forecasted
    sales with a 95% confidence band, and surfaces inventory stockout/overstock
@@ -109,7 +112,7 @@ python3 app.py
 The API starts on `http://localhost:5001`. Verify it's working:
 ```bash
 curl http://localhost:5001/api/health
-# {"status": "ok", "model": "prophet"}
+# {"status": "ok", "model": "arima"}
 ```
 
 ### 2.3 Available endpoints
@@ -153,8 +156,8 @@ Open `http://localhost:5173` — you should see the dashboard with:
 
 ### 4.1 Deploy the Flask API to Render
 
-1. Push the whole `sales-forecasting` folder (including `ml/data/sales_data.csv`)
-   to a GitHub repo. Render's free tier has an ephemeral filesystem between deploys.
+1. Push the whole `sales-forecasting` folder to a GitHub repo. Render's free tier
+   has an ephemeral filesystem between deploys.
 2. Go to [render.com](https://render.com) → **New** → **Web Service**.
 3. Connect your GitHub repo.
 4. Configure:
@@ -162,9 +165,11 @@ Open `http://localhost:5173` — you should see the dashboard with:
    - **Build Command:** `bash render_build.sh`
    - **Start Command:** `gunicorn app:app --bind 0.0.0.0:$PORT`
    - **Environment:** Python 3
-5. Add an environment variable so the app finds the models at their actual path:
+5. The `server/runtime.txt` pins Python 3.11.11 — this is **required** because
+   Render's default Python 3.14 lacks pre-built wheels for ML packages.
+6. Add an environment variable so the app finds the models:
    - **Key:** `MODEL_DIR_PATH`, **Value:** `/opt/render/project/src/ml/models`
-6. Click **Create Web Service**. Render will give you a URL like
+7. Click **Create Web Service**. Render will give you a URL like
    `https://sales-forecasting-api.onrender.com`.
 
 ### 4.2 Deploy the React dashboard to Vercel
@@ -198,7 +203,8 @@ data (must have `date` and `sales` columns) and re-run:
 cd ml
 python3 train_model.py
 ```
-Then restart (or redeploy) the Flask API so it picks up the new model files.
+Then restart (or redeploy) the Flask API so regenerated `recent_data.csv` and
+`metadata.json` are picked up.
 
 ## Tech stack
 

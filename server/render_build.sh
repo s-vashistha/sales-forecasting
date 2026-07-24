@@ -8,4 +8,4 @@ pip install --upgrade pip
 echo "=== Step 2: Install dependencies ==="
 pip install -r requirements.txt
 
-echo "=== Build
+echo "=== Build complete ==="
