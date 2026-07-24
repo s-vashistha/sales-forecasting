@@ -1,0 +1,24 @@
+Importing plotly failed. Interactive plots will not work.
+C:\Users\HP\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\statsmodels\base\model.py:607: ConvergenceWarning: Maximum Likelihood optimization failed to converge. Check mle_retvals
+  warnings.warn("Maximum Likelihood optimization failed to "
+Loading and preparing data...
+
+Training ARIMA...
+ARIMA  -> Accuracy: 95.28% | RMSE: 22.51
+
+Training Prophet...
+Traceback (most recent call last):
+  File "c:\Users\HP\Downloads\sales-forecasting\sales-forecasting\ml\train_model.py", line 125, in <module>
+    main()
+  File "c:\Users\HP\Downloads\sales-forecasting\sales-forecasting\ml\train_model.py", line 72, in main
+    prophet_model, prophet_pred, prophet_lower, prophet_upper = train_prophet(train_df)
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "c:\Users\HP\Downloads\sales-forecasting\sales-forecasting\ml\train_model.py", line 35, in train_prophet
+    model = Prophet(
+            ^^^^^^^^
+  File "C:\Users\HP\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\prophet\forecaster.py", line 155, in __init__
+    self._load_stan_backend(stan_backend)
+  File "C:\Users\HP\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\LocalCache\local-packages\Python311\site-packages\prophet\forecaster.py", line 168, in _load_stan_backend
+    logger.debug("Loaded stan backend: %s", self.stan_backend.get_type())
+                                            ^^^^^^^^^^^^^^^^^
+AttributeError: 'Prophet' object has no attribute 'stan_backend'

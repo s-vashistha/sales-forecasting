@@ -153,21 +153,17 @@ Open `http://localhost:5173` — you should see the dashboard with:
 
 ### 4.1 Deploy the Flask API to Render
 
-1. Push the whole `sales-forecasting` folder (including `ml/models/`, which
-   contains your trained `.pkl` files) to a GitHub repo. Render's free tier has
-   an ephemeral filesystem between deploys, so the trained models must be
-   committed to the repo rather than regenerated at build time.
+1. Push the whole `sales-forecasting` folder (including `ml/data/sales_data.csv`)
+   to a GitHub repo. Render's free tier has an ephemeral filesystem between deploys.
 2. Go to [render.com](https://render.com) → **New** → **Web Service**.
 3. Connect your GitHub repo.
 4. Configure:
    - **Root Directory:** `server`
-   - **Build Command:** `pip install --upgrade pip && pip install -r requirements.txt`
+   - **Build Command:** `bash render_build.sh`
    - **Start Command:** `gunicorn app:app --bind 0.0.0.0:$PORT`
    - **Environment:** Python 3
-5. Since Render only runs build/start commands from within `server/`, but still
-   checks out the full repo, add an environment variable so the app finds the
-   models at their actual path on disk:
-   - **Environment Variable:** `MODEL_DIR_PATH` = `/opt/render/project/src/ml/models`
+5. Add an environment variable so the app finds the models at their actual path:
+   - **Key:** `MODEL_DIR_PATH`, **Value:** `/opt/render/project/src/ml/models`
 6. Click **Create Web Service**. Render will give you a URL like
    `https://sales-forecasting-api.onrender.com`.
 

@@ -9,36 +9,38 @@ Endpoints:
   GET  /api/model-metrics               -> ARIMA vs Prophet comparison
 """
 import os
-import pickle
 import json
-from datetime import timedelta
+import warnings
+warnings.filterwarnings("ignore")
 
 import pandas as pd
+import numpy as np
 from flask import Flask, jsonify, request
 from flask_cors import CORS
+from statsmodels.tsa.arima.model import ARIMA
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-# Locally, models live in ../ml/models. In deployment (e.g. Render, where only
-# the server/ folder is deployed), set MODEL_DIR_PATH to point at a copy of the
-# model artifacts bundled inside server/ instead (see README Part 4.1).
 MODEL_DIR = os.environ.get("MODEL_DIR_PATH", os.path.join(BASE_DIR, "..", "ml", "models"))
 
 app = Flask(__name__)
 CORS(app)
 
-# ── Load model + metadata once at startup ──
-with open(os.path.join(MODEL_DIR, "prophet_model.pkl"), "rb") as f:
-    prophet_model = pickle.load(f)
-
+# ── Load data + metadata (no pickle) ──
 with open(os.path.join(MODEL_DIR, "metadata.json")) as f:
     metadata = json.load(f)
 
 recent_data = pd.read_csv(os.path.join(MODEL_DIR, "recent_data.csv"), parse_dates=["date"])
 
+# Lightweight ARIMA model trained at startup from recent data
+# (avoids pickle compatibility issues across pandas versions)
+history_sales = recent_data["sales"].values
+arima_model = ARIMA(history_sales, order=(5, 1, 2))
+arima_fitted = arima_model.fit()
+
 
 @app.route("/api/health")
 def health():
-    return jsonify({"status": "ok", "model": metadata["best_model"]})
+    return jsonify({"status": "ok", "model": "arima"})
 
 
 @app.route("/api/forecast")
@@ -46,20 +48,24 @@ def forecast():
     days = int(request.args.get("days", 30))
     days = min(max(days, 1), 90)  # clamp between 1-90
 
-    future = prophet_model.make_future_dataframe(periods=days)
-    result = prophet_model.predict(future)
+    forecast_result = arima_fitted.get_forecast(steps=days)
+    pred = forecast_result.predicted_mean.values
+    conf_int = forecast_result.conf_int(alpha=0.05)
 
-    forecast_rows = result.tail(days)
+    # Generate dates starting from the last date in recent_data
+    last_date = recent_data["date"].max()
+    date_range = pd.date_range(start=last_date + pd.Timedelta(days=1), periods=days)
+
     payload = [
         {
-            "date": row["ds"].strftime("%Y-%m-%d"),
-            "forecast": round(row["yhat"], 1),
-            "lower": round(row["yhat_lower"], 1),
-            "upper": round(row["yhat_upper"], 1),
+            "date": date.strftime("%Y-%m-%d"),
+            "forecast": round(float(pred[i]), 1),
+            "lower": round(float(conf_int[i, 0]), 1),
+            "upper": round(float(conf_int[i, 1]), 1),
         }
-        for _, row in forecast_rows.iterrows()
+        for i, date in enumerate(date_range)
     ]
-    return jsonify({"days": days, "model": metadata["best_model"], "forecast": payload})
+    return jsonify({"days": days, "model": "arima", "forecast": payload})
 
 
 @app.route("/api/history")
@@ -81,12 +87,12 @@ def inventory_recommendations():
     Compares 14-day forecast against average recent stock levels to flag
     products at risk of stockout or overstock.
     """
-    future = prophet_model.make_future_dataframe(periods=14)
-    result = prophet_model.predict(future)
-    forecast_14d = result.tail(14)["yhat"].sum()
+    forecast_result = arima_fitted.get_forecast(steps=14)
+    pred = forecast_result.predicted_mean.values
+    forecast_14d = float(pred.sum())
 
     avg_daily_forecast = forecast_14d / 14
-    current_avg_stock = recent_data["stock_level"].mean() if "stock_level" in recent_data.columns else 250
+    current_avg_stock = float(recent_data["stock_level"].mean()) if "stock_level" in recent_data.columns else 250.0
     days_of_stock_left = current_avg_stock / avg_daily_forecast if avg_daily_forecast > 0 else 0
 
     if days_of_stock_left < 7:
