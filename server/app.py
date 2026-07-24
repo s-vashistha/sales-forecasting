@@ -23,7 +23,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_DIR = os.environ.get("MODEL_DIR_PATH", os.path.join(BASE_DIR, "..", "ml", "models"))
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, origins=["https://sales-forecasting-seven.vercel.app", "http://localhost:5173"])
 
 # ── Load data + metadata (no pickle) ──
 with open(os.path.join(MODEL_DIR, "metadata.json")) as f:
